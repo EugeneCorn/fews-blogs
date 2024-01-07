@@ -17,47 +17,76 @@
 <body>
 <?php
     require('db_connection.php');
+    include('mysql_secure_query_functions.php');
+
     // When form submitted insert values into the database.
     if (isset($_REQUEST['username'])) {
+
         // Check do passwords are different.
         if ($_REQUEST['password'] != $_REQUEST['cpassword']) {
             echo "<script> alert('Password and Confirmation password are different. They must be the same.') </script></br>";
             echo "<script> window.location='/registration' </script>";
             exit();
         }
-        $username   = stripslashes($_REQUEST['username']); // Removes backslashes.
-        $username   = mysqli_real_escape_string($db_connection, $username); // Escapes special characters in a string.
-        $email      = stripslashes($_REQUEST['email']);
-        $email      = mysqli_real_escape_string($db_connection, $email);
-        $password   = stripslashes($_REQUEST['password']);
-        $password   = mysqli_real_escape_string($db_connection, $password);
-        $cpassword  = stripslashes($_REQUEST['cpassword']);
-        $gender     = stripslashes($_REQUEST['gender']);
-        $gender     = mysqli_real_escape_string($db_connection, $gender);
-        $bio        = stripslashes($_REQUEST['bio']);
-        $bio        = mysqli_real_escape_string($db_connection, $bio);
+
+        $username   = $_REQUEST['username'];
+        $email      = $_REQUEST['email'];
+        $password   = $_REQUEST['password'];
+        $password   = md5($password);
+        $cpassword  = $_REQUEST['cpassword'];
+        $gender     = $_REQUEST['gender'];
+        $bio        = $_REQUEST['bio'];
         $create_datetime = date("Y-m-d H:i:s");
-        $get_user   = mysqli_query($db_connection, "SELECT * FROM users 
-            WHERE username='$username';");
+
         // Checking does the given username already exist.
-        if (mysqli_num_rows($get_user) > 0){
+        $get_user   = mysqli_prepare($db_connection,
+            "SELECT 
+                    COUNT(id)
+                    AS user_number
+                    FROM users 
+                    WHERE username = ? ");
+        $secure_stmt_variables = array($username);
+        $get_user = secureMysqliQuerySelect($get_user, $secure_stmt_variables);
+        if ($get_user['user_number'] > 0){
             echo "<script> alert('This username already exists.') </script></br>";
             echo "<script> window.location='/registration' </script>";
             exit();
         }
-        $get_email = mysqli_query($db_connection, "SELECT * FROM users 
-            WHERE email='$email';");
+
         // Checking does the given email already in use.
-        if (mysqli_num_rows($get_email) > 0){
+        $get_email = mysqli_prepare($db_connection,
+            "SELECT
+                    COUNT(id)
+                    AS user_number
+                    FROM users 
+                    WHERE email = ?  ");
+        $secure_stmt_variables = array($email);
+        $get_email = secureMysqliQuerySelect($get_email, $secure_stmt_variables);
+        if ( $get_email['user_number'] > 0){
             echo "<script> alert('This email already in use.') </script></br>";
             echo "<script> window.location='/registration' </script>";
             exit();
         }
 
-        $user_create_query = "INSERT into `users` (username, password, email, gender, bio, create_datetime)
-                        VALUES ('$username', '" . md5($password) . "', '$email', '$gender', '$bio', '$create_datetime')";
-        $result = mysqli_query($db_connection, $user_create_query);    
-        
+        $user_create_query = "
+            INSERT into `users` (
+                                 username,
+                                 password,
+                                 email,
+                                 gender,
+                                 bio,
+                                 create_datetime)
+                        VALUES ( ? , ? , ? , ? , ? , ? )";
+        $result = mysqli_prepare($db_connection, $user_create_query);
+        $secure_stmt_variables = array (
+            $username,
+            $password,
+            $email,
+            $gender,
+            $bio,
+            $create_datetime,
+        );
+        secureMysqliQueryExecute($result, $secure_stmt_variables);
         if ($result) {
             echo "<div class='info_msg'>
                         <p class='info_msg_text'>You are registered successfully.</p>

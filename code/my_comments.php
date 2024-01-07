@@ -1,13 +1,20 @@
 <?php
     include("auth_session.php");
     require("db_connection.php");
+    include("mysql_secure_query_functions.php");
+    include("website_functions.php");
+
+    $comment_query = mysqli_prepare($db_connection,
+        "SELECT *
+        FROM `comments` 
+        WHERE username= ?
+        ORDER BY create_datetime
+        DESC");
 
     $username = $_SESSION['username'];
-    $comment_query = mysqli_query($db_connection, "SELECT * FROM `comments` 
-        WHERE username='$username' ORDER BY create_datetime DESC");
-    $user_query = mysqli_query($db_connection, "SELECT * FROM `users` 
-        WHERE username='$username'");
-    $user_item = mysqli_fetch_array($user_query);
+    $params = array($username);
+    $comments = secureMysqliQuerySelectForLoop($comment_query, $params);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,9 +34,8 @@
 </header>
 <body>
     <h1>Your Comments</h1>
-<?php
-    $count = mysqli_num_rows($comment_query);
-    if ($count > 0) {
+<?php ;
+    if ($comments) {
 ?>
     <table>
         <tbody>
@@ -42,13 +48,13 @@
             </tr>
 <?php
         $n = 1;
-        while ($comment_list = mysqli_fetch_array($comment_query)) {
+        foreach ($comments as $comment_list) {
             print   "<tr>
                         <td align='center'>" . $n++ . "</td>
                         <td align='center'>
                             <a href=/article/". $comment_list['article_id'] . ">" . $comment_list['article_topic'] . "</a>
                         </td>
-                        <td align='center'>" . $comment_list['comment'] . "</td>
+                        <td align='center'>" . newlines2br($comment_list['comment']) . "</td>
                         <td align='center'>" . $comment_list['create_datetime'] . "</td>
                         <td align='center'>
                             <a class='table_button' href='#' onclick='comment_delete(".$comment_list['comment_id'].",".$comment_list['article_id'].")'><i class='fa-solid fa-trash'></i></a>

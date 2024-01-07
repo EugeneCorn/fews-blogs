@@ -22,33 +22,50 @@
     <h1>Add Article</h1>
 <?php
     require('db_connection.php');
-    
+    include('mysql_secure_query_functions.php');
+
     if(isset($_REQUEST['topic'])) {
-        $topic    = stripslashes($_REQUEST['topic']);
-        $topic      = mysqli_real_escape_string($db_connection, $topic);
-        $content    = stripslashes($_REQUEST['content']);
-        $content    = mysqli_real_escape_string($db_connection, $content);
+        $topic    = $_REQUEST['topic'];
+        $content    = $_REQUEST['content'];
         $username   = $_SESSION['username'];
         $create_datetime = date("Y-m-d H:i:s");
-        $edit_datetime   = date("Y-m-d H:i:s");
-        
-        // Checking the Publish checkbox value
+
+        // Checking the 'Publish' checkbox value
         if (isset($_POST['publish'])){
             $publish = "yes";
         } else {
             $publish = "no";
         }
-    
-        $article_add_query = "INSERT INTO `articles` (topic, content, username, create_datetime, public) 
-            VALUES ('$topic', '$content', '$username', '$create_datetime', '$publish')";
-        $result = mysqli_query($db_connection, $article_add_query) or die(mysqli_error());
-        
-        if ($result) {
+
+        $article_add_query = mysqli_prepare($db_connection,
+        "INSERT
+               INTO `articles` 
+                   (topic, 
+                    content, 
+                    username, 
+                    create_datetime, 
+                    public) 
+               VALUES ( ?, ? , ? , ? , ? )")
+            or die(mysqli_error($db_connection));
+
+        // The array for the secureMysqliQueryExecute function.
+        $secure_stmt_variables = array(
+            $topic,
+            $content,
+            $username,
+            $create_datetime,
+            $publish,
+        );
+
+        // Execute the prepared statement.
+        secureMysqliQueryExecute($article_add_query, $secure_stmt_variables);
+
+        if ($article_add_query) {
             print "
                 <div class='congrats'>
                     <p class='congrats_title'>Congratulations!</p> 
                     <p class='congrats_text'>You added the article!</p>
-                    <p><a href='add_article.php'>Add another article</a></p>
+                    <p><a href='/article/add'>Add another article</a></p>
                 </div>";
         } else {
             echo "<p>ERROR: Something went wrong. Article wasn't add. :(</p>";

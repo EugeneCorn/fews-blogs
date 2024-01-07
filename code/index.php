@@ -17,16 +17,18 @@ if (empty($_GET["q"])) {
                 include("edit_article.php");
             } elseif ($url[2] == "preview") {
                 include("article_preview.php");
+            } elseif ($url[2] == "delete") {
+                include("article_delete.php");
             }
         }
     }
 
     // User managing section.
     if ($url[0] == "user") {
-        if (empty($url[2])) {
-            include("user_profile.php");
-        } else {
+        if ($url[1] == "edit") {
             include("user_profile_edit.php");
+        } else {
+            include("user_profile.php");
         }
     }
 

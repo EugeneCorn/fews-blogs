@@ -18,19 +18,28 @@
     <h1>Login</h1>
 <?php
         require('db_connection.php');
+        include('mysql_secure_query_functions.php');
         session_start();
         // When form submitted create user session.
         if (isset($_POST['username'])) {
-            $username   = stripslashes($_REQUEST['username']); // Remove backslashes.
-            $username   = mysqli_real_escape_string($db_connection, $username);
-            $password   = stripslashes($_REQUEST['password']);
-            $password   = mysqli_real_escape_string($db_connection, $password);
-            // Check does the user exist in a database.
-            $user_query      = "SELECT * FROM `users` WHERE username='$username' AND password='" . md5($password) . "'";
-            $result     = mysqli_query($db_connection, $user_query) or die(mysql_error());
-            $rows       = mysqli_num_rows($result);
 
-            if ($rows == 1) {
+            $username   = $_REQUEST['username'];
+            $password   = $_REQUEST['password'];
+            $md5Password = md5($password);
+
+            // Check does the user exist in a database.
+            $user_query = mysqli_prepare($db_connection,
+                "SELECT
+                COUNT(id)
+                AS users_number
+                FROM `users`
+                WHERE username= ?
+                  AND password= ? ") or die(mysqli_error($db_connection));
+
+            $secure_stmt_variables = array($username, $md5Password);
+            $rows = secureMysqliQuerySelect($user_query, $secure_stmt_variables);
+
+            if ($rows['users_number'] == 1) {
                 $_SESSION['username'] = $username;
                 header("Location: /");
             } else {

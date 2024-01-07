@@ -22,7 +22,7 @@
             <li class='left_a'><a href='/dashboard'>My Articles</a></li>
             <li class='left_a'><a href='/comment/list'>My Comments</a></li>
             <li class='right_a'><a href='/logout'>Log out</a></li>
-            <li class='right_a' class='border-none'><a href='/user/".$login_user_id['id']."'>".$_SESSION['username']."</a></li>
+            <li class='right_a' class='border-none'><a href='/user/".$login_user_id['id']."'>". newlines2br($_SESSION['username']) ."</a></li>
             <li class='right_p'><p>You logged in as: </p></li>
             <li class='right_a'><a href='/about_us'>About us</a></li>
         ";

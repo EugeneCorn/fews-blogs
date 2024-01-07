@@ -4,19 +4,23 @@
 
     include("auth_session.php");
     require("db_connection.php");
+    include("mysql_secure_query_functions.php");
+    include("website_functions.php");
 
     // Check does article id is not empty.
     if (!empty($article_id)) {
 
         $username = $_SESSION['username'];
 
-        $article_query = mysqli_query($db_connection, "SELECT * FROM `articles` 
-            WHERE (article_id,username)=('$article_id','$username')");
-        $article_item = mysqli_fetch_array($article_query);
-        $count = mysqli_num_rows($article_query);
+        $article_query = mysqli_prepare($db_connection, "SELECT * FROM `articles` 
+            WHERE (article_id,username)=( ? , ? )");
+
+        $secure_stmt_variables = array($article_id, $username);
+
+        $article_item = secureMysqliQuerySelect($article_query, $secure_stmt_variables);
 
         // Check does article exists.
-        if($count > 0){
+        if($article_item > 0){
 ?>
             <!DOCTYPE html>
             <html lang="en">
@@ -51,12 +55,14 @@
                 </div>
                 <form action="" method="post">
                     <p class='title'>Topic</p>
-                    <textarea name="topic" rows="2" cols="60" required><?php print $article_item['topic']?></textarea>
+                        <textarea name="topic" rows="2" cols="60" required><?php print $article_item['topic']?></textarea>
                     <p class='title'>Content</p>
                     <textarea name="content" rows="20" cols="60" required><?php print $article_item['content']?></textarea>
                     <div class='add_button'>
                         <input type="submit" value="Edit" name="edit">
-                        <p class='publish'>Publish?<input type="checkbox" name="publish[]" value="yes"></p>
+                        <p class='publish'>
+                            Publish?<input type="checkbox" name="publish[]" value="yes">
+                        </p>
                 </form>
 <?php 
                 } else {
@@ -70,10 +76,8 @@
 
             // Updated the `article` table if there is a 'topic' request. 
             if(isset($_REQUEST['topic'])) {
-                $topic      = stripslashes($_REQUEST['topic']);
-                $topic      = mysqli_real_escape_string($db_connection, $topic);
-                $content    = stripslashes($_REQUEST['content']);
-                $content    = mysqli_real_escape_string($db_connection, $content);
+                $topic      = $_REQUEST['topic'];
+                $content    = $_REQUEST['content'];
                 $edit_datetime = date("Y-m-d H:i:s");
 
                 // Checking the Publish checkbox value.
@@ -83,14 +87,36 @@
                     $publish = "no";
                 }
 
-                $article_update_query = mysqli_query($db_connection, "UPDATE `articles` 
-                    SET topic='$topic', content='$content', edit_datetime='$edit_datetime', public='$publish' 
-                    WHERE article_id='$article_id'") or die(mysqli_error());
+                $article_update_query = mysqli_prepare(
+                        $db_connection,
+                        "UPDATE `articles` 
+                                SET 
+                                    topic= ? , 
+                                    content= ? , 
+                                    edit_datetime= ? , 
+                                    public= ? 
+                                WHERE 
+                                    article_id= ? ")
+                or die(mysqli_error($db_connection));
 
-                if ($article_update_query) {
-                    print "<p class='publish'>The article <b>" . $article_item['topic'] . "</b> was successfully edited!</p>";
+                $secure_stmt_variables = array(
+                        $topic,
+                        $content,
+                        $edit_datetime,
+                        $publish,
+                        $article_id,
+                );
+
+                secureMysqliQueryExecute($article_update_query, $secure_stmt_variables);
+
+                if (!mysqli_error($db_connection)) {
+                    print "<p class='publish'>
+                                The article <b>" . newlines2br($article_item['topic']) . "</b> was successfully edited!
+                           </p>";
                 } else {
-                    print "<p class='publish'>ERROR: The article <b>" . $article_item['topic'] . "</b> wasn't edited.</p>";
+                    print "<p class='publish'>
+                                ERROR: The article <b>" . newlines2br($article_item['topic']) . "</b> wasn't edited.
+                           </p>";
                 }
             }
             print "</div>";

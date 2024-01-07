@@ -1,23 +1,16 @@
 <?php
     include("auth_session.php");
     require("db_connection.php");
+    include("mysql_secure_query_functions.php");
+    include("website_functions.php");
 
     $username = $_SESSION['username'];
-    $user_query = mysqli_query($db_connection, "SELECT * FROM `users` 
-        WHERE username='$username'");
-    $user_item = mysqli_fetch_array($user_query);
-    
-    // Function for editing user's data.
-    function edit_user_profile($name, $value) {
-        global $username, $db_connection;
-        $user_query = mysqli_query($db_connection, "UPDATE `users` SET $name='$value'
-            WHERE username='$username'") or die(mysqli_error());
-        if($user_query){
-            print "The " . $name . " has changed successfully.";
-        } else {
-            print "The " . $name . " wasn't changed.";
-        }
-    }
+    $user_query = mysqli_prepare($db_connection,
+        "SELECT *
+        FROM `users` 
+        WHERE username= ? ");
+    $secure_stmt_variables = array ($username);
+    $user_item = secureMysqliQuerySelect($user_query, $secure_stmt_variables);
 ?>
     <!DOCTYPE html>
     <html lang="en">

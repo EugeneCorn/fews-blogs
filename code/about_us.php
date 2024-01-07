@@ -12,7 +12,7 @@
     <script src="https://kit.fontawesome.com/743929e53b.js" crossorigin="anonymous"></script>
 </head>
 <header class="user_panel">
-    <?php session_start(); include("user_panel.php")?>
+    <?php session_start(); include("website_functions.php"); include("user_panel.php")?>
 </header>
 <body class="center">
     <h1 align="center">Fews Blogs</h1>

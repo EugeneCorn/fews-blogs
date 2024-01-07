@@ -1,23 +1,30 @@
 <?php
-    // Variable to pass article ID from URI.
-    $article_id = $url[1];
-
     include('auth_session.php');
     require('db_connection.php');
+    include('mysql_secure_query_functions.php');
+    include('website_functions.php');
+    // Variable to pass article ID from URI.
+    $article_id = $url[1];
 
     // Check does article id is not empty.
     if(!empty($article_id)) {
         $username = $_SESSION['username'];
-        $article_query = mysqli_query($db_connection, "SELECT * FROM `articles` 
-            WHERE (article_id,username)=('$article_id','$username')");
-        $article_item = mysqli_fetch_array($article_query);
-        $count = mysqli_num_rows($article_query);
+
+        $article_query = mysqli_prepare($db_connection, "SELECT * FROM `articles` 
+            WHERE (article_id,username)=( ? , ? )");
+        // The array for the secureMysqliQuerySelect function.
+        $secure_stmt_variables = array(&$article_id, &$username);
+        // Execute the prepared statement.
+        $article_item = secureMysqliQuerySelect($article_query, $secure_stmt_variables);
 
         // Check does article exists.
-        if($count > 0) {
-            $user_query = mysqli_query($db_connection, "SELECT * FROM `users` 
-                WHERE username='$username'");
-            $user_item = mysqli_fetch_array($user_query);
+        if($article_item) {
+            $user_query = mysqli_prepare($db_connection, "SELECT * FROM `users` 
+                WHERE username = ?");
+            // The array for the secureMysqliQuerySelect function.
+            $secure_stmt_variables = array(&$username);
+            // Execute the prepared statement.
+            $user_item = secureMysqliQuerySelect($user_query, $secure_stmt_variables);
 ?>
             <!DOCTYPE html>
             <html lang="en">
@@ -37,37 +44,50 @@
             </header>
             <body>
                 <div class='title'>
-                    <p class='preview'>Preview Page</p>
-                    <p class='edit'><a href="/article/<?php print $article_item['article_id'] ?>/edit">Edit Article</a></p>
+                    <p class='preview'>
+                        Preview Page
+                    </p>
+                    <p class='edit'>
+                        <a href="/article/<?php print $article_item['article_id'] ?>/edit">
+                            Edit Article
+                        </a>
+                    </p>
                 </div>
 <?php               
-                    print "<h2 class='article_topic'>".$article_item['topic']."</h2>";
-                    print "<div class='article_info'>";
-                        // Show edited time if edit_datetime is not null.
-                        if ($article_item['edit_datetime'] != null){
-                            print "<p><b>Updated:</b> ".$article_item['edit_datetime']."</p>";
-                        } else {
-                            print "<p><b>Created:</b> ".$article_item['create_datetime']."</p>";
-                        }
-                    print "
-                        <p><b>Published:</b>".$article_item['public']."</p>
-                        <p class='text'>Created by: <a class='link' href='/user/".$user_item['id']."'>".$article_item['username']."</a></p>
-                    ";
-                print "</div>";
-                print "
-                    <p class='article_content'>".$article_item['content']."</p>
-                ";
-                
-                print "<p class='comment'>Comments</p>";
+            print "<h2 class='article_topic'>".$article_item['topic']."</h2>";
+            print "<div class='article_info'>";
+                // Show edited time if edit_datetime is not null.
+                if ($article_item['edit_datetime'] != null){
+                    print "<p><b>Updated:</b> ".$article_item['edit_datetime']."</p>";
+                } else {
+                    print "<p><b>Created:</b> ".$article_item['create_datetime']."</p>";
+                }
+            print "
+                <p><b>Published:</b>".$article_item['public']."</p>
+                <p class='text'>
+                    Created by: 
+                        <a class='link' href='/user/".$user_item['id']."'>
+                            ".$article_item['username']."
+                        </a>
+                </p>
+            ";
+            print "</div>";
+            print "
+                <p class='article_content'>".newlines2br($article_item['content'])."</p>
+            ";
 
-                $comment_list_query = mysqli_query($db_connection, "SELECT * FROM `comments` 
-                    WHERE article_id='$article_id'");
-                $count_comment_list = mysqli_num_rows($comment_list_query);
-                // Show comments if comments quantity bigger than zero.
-// Show comments if they are exists.
-            if ($count_comment_list > 0) {
+            print "<p class='comment'>Comments</p>";
+
+            $comment_list_query = mysqli_prepare($db_connection, "SELECT * FROM `comments` 
+                WHERE article_id = ? ");
+
+            $params = array($article_id);
+            $comments = secureMysqliQuerySelectForLoop($comment_list_query, $params);
+
+            // Show comments if they are exists.
+            if ($comments) {
                 $n = 1;
-                while ($comment_list_item = mysqli_fetch_array($comment_list_query)){
+                foreach ($comments as $comment_list_item){
                     print "
                         <ul class='comment_list'>
                             <li>
@@ -75,7 +95,12 @@
                             </li>
                             <li>
                                 <p>            
-                                    <a class='comment_user'href='user_profile.php?id=".$comment_list_item['username_id']."'>".$comment_list_item['username']."</a>
+                                    <a 
+                                       class='comment_user'
+                                       href='/user/".$comment_list_item['username_id']."'
+                                    >
+                                            ".$comment_list_item['username']."
+                                    </a>
                                 </p>
                             </li>";
                     // Show edit date and time if the comment edited.
@@ -94,7 +119,7 @@
                                 </li>";
                     } 
                     print "</ul>";
-                    print  "<p class='comment_content'>".$comment_list_item['comment']."</p>";
+                    print  "<p class='comment_content'>".newlines2br($comment_list_item['comment'])."</p>";
                 }
             }
 ?>

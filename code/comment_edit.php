@@ -1,25 +1,28 @@
 <?php
     include('auth_session.php');
     require('db_connection.php');
+    include("mysql_secure_query_functions.php");
 
     // Variables to passing arguments from URL.
-    $comment =  $url[0];
     $comment_id = $url[1];
 
     // Check does comment id is not empty.
     if (!empty($comment_id)) {
-        $comment_id = $url[1];
+
         $username = $_SESSION['username'];
-        $comment_query = mysqli_query($db_connection, "SELECT * FROM `comments` 
-            WHERE (comment_id,username)=('$comment_id','$username')");
-        $comment_item = mysqli_fetch_array($comment_query);
-        $count = mysqli_num_rows($comment_query);
-        if ($comment_item != null) {
-            $article_id = $comment_item['article_id'];
-        }
+
+        $comment_query = mysqli_prepare($db_connection,
+    "SELECT * 
+           FROM `comments` 
+           WHERE ( `comment_id` , `username` ) = ( ? , ? )")
+        or die(mysqli_error($db_connection));
+
+        $secure_stmt_variables = array($comment_id, $username);
+
+        $comment_item = secureMysqliQuerySelect($comment_query, $secure_stmt_variables);
         
         // Check does article exists.
-        if($count > 0){
+        if($comment_item > 0){
 ?>
             <!DOCTYPE html>
             <html lang="en">
@@ -52,11 +55,26 @@
 <?php
                 // Edit comment block.
                 if (isset($_REQUEST['edit_comment'])) {
-                    $comment = mysqli_real_escape_string($db_connection, $_REQUEST['edit_comment']);
-                    $edit_datetime = date("Y-m-d H:i:s");
-                    $comment_edit_query = mysqli_query($db_connection, "UPDATE `comments`
-                        SET comment='$comment', edit_datetime='$edit_datetime'
-                        WHERE comment_id='$comment_id'");
+
+                    $comment        = $_REQUEST['edit_comment'];
+                    $edit_datetime  = date("Y-m-d H:i:s");
+
+                    $comment_edit_query = mysqli_prepare($db_connection,
+                "UPDATE `comments`
+                       SET 
+                           comment= ? ,
+                           edit_datetime= ?
+                       WHERE 
+                           comment_id= ? ")
+                    or die(mysqli_error($db_connection));
+
+                    $secure_stmt_variables = array(
+                        &$comment,
+                        &$edit_datetime,
+                        &$comment_id,
+                    );
+
+                    secureMysqliQueryExecute($comment_edit_query, $secure_stmt_variables);
 
                     if ($comment_edit_query) {
                         print "<p class='comment_info'>Comment was successfully updated!</p>";

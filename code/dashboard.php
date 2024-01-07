@@ -1,13 +1,21 @@
 <?php
     include("auth_session.php");
     require('db_connection.php');
-    
+    include('mysql_secure_query_functions.php');
+    include('website_functions.php');
+
     $username = $_SESSION['username'];
-    $article_query = mysqli_query($db_connection, "SELECT * FROM `articles` 
-        WHERE username='$username' ORDER BY create_datetime DESC");
-    $user_query = mysqli_query($db_connection, "SELECT * FROM `users` 
-        WHERE username='$username'");
-    $user_item = mysqli_fetch_array($user_query);
+
+    $article_query = mysqli_prepare($db_connection,
+        "SELECT *
+        FROM `articles`
+        WHERE username= ?
+        ORDER BY create_datetime 
+        DESC");
+
+    $params = array($username);
+    $articles = secureMysqliQuerySelectForLoop($article_query, $params);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,12 +39,12 @@
     <h2>What will you share with us today?</h2>
     <div class='above_the_table'>
         <p class='your_articles'>Your Articles</p>
-        <p><a class='add_article'href="/article/add">Add Article</a></p>
+        <p><a class='add_article' href="/article/add">Add Article</a></p>
     </div>
 <?php
-    $count = mysqli_num_rows($article_query);
+
     // Show user's articles if their quantity is bigger than zero.
-    if ($count > 0) {
+    if ($articles) {
 ?>
     <table>
         <thead>
@@ -53,7 +61,7 @@
         <tbody>
 <?php
         $i = 1;
-        while ($article_item = mysqli_fetch_array($article_query)) {
+        foreach ($articles as $article_item) {
             print "
                 <tr>
                     <td align='center'>".$i++."</td>
@@ -62,13 +70,13 @@
                 if ($article_item['public'] == "no"){
                     print "
                         <td>
-                            <a href='/article/".$article_item['article_id']."/preview'>".$article_item['topic']."</a>
+                            <a href='/article/".$article_item['article_id']."/preview'>".newlines2br($article_item['topic'])."</a>
                         </td>
                     "; 
                 } else {
                     print "
                         <td>
-                            <a href='/article/".$article_item['article_id']."'>".$article_item['topic']."</a>
+                            <a href='/article/".$article_item['article_id']."'>".newlines2br($article_item['topic'])."</a>
                         </td>
                     "; 
                 }
@@ -103,8 +111,8 @@
             // Function for articles deleting.
             function delete_article(article_id) {
                 var r = confirm("Are you sure you want to delete this article?");
-                if (r == true) {
-                    window.location.assign("article_delete.php?id=" + article_id);
+                if (r === true) {
+                    window.location.assign("/article/" + article_id + "/delete");
                 }
             }
     </script>

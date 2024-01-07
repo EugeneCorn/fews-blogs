@@ -54,7 +54,7 @@
 
 .article_content {
     margin: 30px;
-    text-indent: 30px;
+    text-indent: 2em;
     font-size: 19px;
     padding-bottom: 10px;
     line-height: 1.4;
@@ -66,7 +66,7 @@
     margin: 0px 0px 10px 150px;
     letter-spacing: 3px;
     font-family: 'Space Mono', monospace;
-    font-size: 35px;   
+    font-size: 35px;
 }
 
 textarea {

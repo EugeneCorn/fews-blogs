@@ -1,6 +1,8 @@
 <?php
 session_start();
 require("db_connection.php");
+include("mysql_secure_query_functions.php");
+include("website_functions.php");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,22 +25,45 @@ require("db_connection.php");
 <h1 class="sitename">Fews Blogs</h1>
 <h2 class="slogan">Share us any of your thoughts</h2>
 <?php
-$article_query      = mysqli_query($db_connection, "SELECT * FROM `articles`
-        WHERE public='yes' ORDER BY create_datetime DESC") or die(mysqli_error());
+
+$public = "yes";
+
+$article_query = mysqli_prepare($db_connection,
+    "SELECT *
+    FROM `articles`
+    WHERE public= ? 
+    ORDER BY create_datetime 
+    DESC")
+    or die(mysqli_error($db_connection));
+
+$params = array($public);
+$articles = secureMysqliQuerySelectForLoop($article_query, $params);
+
 print "<div class='article'>";
-while ($article_item = mysqli_fetch_array($article_query)) {
-$username   = $article_item['username'];
-$user_query = mysqli_query($db_connection, "SELECT * FROM `users`
-            WHERE username='$username'");
-$user_item  = mysqli_fetch_array($user_query);
+foreach ($articles as $article_item) {
+
+    $username = $article_item['username'];
+
+    $user_query = mysqli_prepare($db_connection,
+        "SELECT *
+        FROM `users`
+        WHERE username= ? ");
+
+    $secure_stmt_variables = array($public);
+
+    $user_item = secureMysqliQuerySelect($user_query, $secure_stmt_variables);
 ?>
 <h3 class="topic">
-    <a href="/article/<?php print $article_item['article_id'] ?>"><?php print $article_item['topic'] ?></a>
+    <a href="/article/<?php print $article_item['article_id'] ?>">
+        <?php print newlines2br($article_item['topic']) ?>
+    </a>
 </h3>
 <ul class="article_info">
     <li class="right">
         <p class="text">Created by
-            <a class="user" href="/user/<?php print $user_item['id']?>"><?php print $article_item['username'] ?></a>
+            <a class="user" href="/user/<?php print $user_item['id']?>">
+                <?php print $article_item['username'] ?>
+            </a>
         </p>
     </li>
     <?php
@@ -66,11 +91,21 @@ $user_item  = mysqli_fetch_array($user_query);
     }
     print "</ul>
                 <br>";
-    print "<p class='article_content'>".$article_item['content']."</p>";
-    $comment_query = mysqli_query($db_connection, "SELECT * FROM `comments` 
-            WHERE article_id='$article_item[article_id]'");
-    $comment_count = mysqli_num_rows($comment_query);
-    print "<a class='comment' href='/article/".$article_item['article_id']."'>Comments(".$comment_count.")</a>";
+    print "<p class='article_content'>".newlines2br($article_item['content'])."</p>";
+
+    $comment_query = mysqli_prepare($db_connection,
+        "SELECT
+        COUNT(comment_id)
+        AS comment_number
+        FROM `comments` 
+        WHERE article_id= ? ");
+
+    $secure_stmt_variables = array ($article_item['article_id']);
+    $comment_count = secureMysqliQuerySelect($comment_query, $secure_stmt_variables);
+
+    print "<a class='comment' href='/article/".$article_item['article_id']."'>
+                Comments(".$comment_count['comment_number'].")
+           </a>";
     }
     ?>
     </div>
