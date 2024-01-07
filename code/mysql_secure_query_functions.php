@@ -25,10 +25,7 @@ function secureMysqliQuerySelect(mysqli_stmt $stmt,array $params):array|null{
 function secureMysqliQueryExecute(mysqli_stmt $stmt, array $params):bool{
 
     // Count input params and make a string with the type of input.
-    $paramTypes = '';
-    for ($i = 1; $i <= count($params); $i++) {
-        $paramTypes .= "s";
-    }
+    $paramTypes = str_repeat('s', count($params));
 
     // Bind parameters if provided.
     if ($paramTypes && $params) {
