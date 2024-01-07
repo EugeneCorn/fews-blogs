@@ -32,14 +32,7 @@ function secureMysqliQueryExecute(mysqli_stmt $stmt, array $params):bool{
 
     // Bind parameters if provided.
     if ($paramTypes && $params) {
-        // Create a temporary array of references for parameters.
-        $bindParams = array($stmt, $paramTypes);
-        foreach ($params as &$param) {
-            $bindParams[] = &$param;
-        }
-
-        // Call mysqli_stmt_bind_param with the temporary array.
-        call_user_func_array('mysqli_stmt_bind_param', $bindParams);
+         $stmt->bind_param($paramTypes, $params);
     }
 
     return mysqli_stmt_execute($stmt);
