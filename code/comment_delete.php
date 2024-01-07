@@ -15,7 +15,7 @@
            WHERE ( `comment_id` , `username` ) = ( ? , ? )");
 
         // The array for the secureMysqliQueryExecute function.
-        $secure_stmt_variables = array(&$comment_id, &$username);
+        $secure_stmt_variables = array($comment_id, $username);
 
         // Execute the prepared statement.
         secureMysqliQueryExecute($comment_delete_query, $secure_stmt_variables);

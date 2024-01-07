@@ -29,15 +29,17 @@
 
             // Check does the user exist in a database.
             $user_query = mysqli_prepare($db_connection,
-                "SELECT *
+                "SELECT
+                COUNT(id)
+                AS users_number
                 FROM `users`
                 WHERE username= ?
                   AND password= ? ") or die(mysqli_error($db_connection));
 
             $secure_stmt_variables = array($username, $md5Password);
-            $rows = secureMysqlQuerySelectNumRows($user_query, $secure_stmt_variables);
+            $rows = secureMysqliQuerySelect($user_query, $secure_stmt_variables);
 
-            if ($rows == 1) {
+            if ($rows['users_number'] == 1) {
                 $_SESSION['username'] = $username;
                 header("Location: /");
             } else {

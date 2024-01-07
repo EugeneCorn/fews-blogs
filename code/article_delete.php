@@ -15,7 +15,7 @@
            WHERE ( `article_id` , `username` ) = ( ? , ? )");
 
         // The array for the secureMysqliQueryExecute function.
-        $secure_stmt_variables = array(&$article_id, &$username);
+        $secure_stmt_variables = array($article_id, $username);
 
         // Execute the prepared statement.
         secureMysqliQueryExecute($article_delete_query, $secure_stmt_variables);

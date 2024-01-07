@@ -15,7 +15,7 @@
         $article_query = mysqli_prepare($db_connection, "SELECT * FROM `articles` 
             WHERE (article_id,username)=( ? , ? )");
 
-        $secure_stmt_variables = array(&$article_id, &$username);
+        $secure_stmt_variables = array($article_id, $username);
 
         $article_item = secureMysqliQuerySelect($article_query, $secure_stmt_variables);
 
@@ -100,11 +100,11 @@
                 or die(mysqli_error($db_connection));
 
                 $secure_stmt_variables = array(
-                        &$topic,
-                        &$content,
-                        &$edit_datetime,
-                        &$publish,
-                        &$article_id,
+                        $topic,
+                        $content,
+                        $edit_datetime,
+                        $publish,
+                        $article_id,
                 );
 
                 secureMysqliQueryExecute($article_update_query, $secure_stmt_variables);

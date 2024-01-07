@@ -22,8 +22,8 @@
 
         // Prepared variables for the secureMysqliQuerySelect function.
         $secure_stmt_variables = array(
-                        &$article_id,
-                        &$public,
+                        $article_id,
+                        $public,
                     );
 
         $article_item = secureMysqliQuerySelect($article_query, $secure_stmt_variables);
@@ -142,13 +142,13 @@
                     or die(mysqli_error($db_connection));
 
                 // The array for the secureMysqliQueryExecute function.
-                $secure_stmt_variables = array(&$comment,
-                                            &$create_datetime,
-                                            &$article_id,
-                                            &$article_topic,
-                                            &$comment_username,
-                                            &$comment_username_id,
-                                            &$comment_username_email
+                $secure_stmt_variables = array($comment,
+                                            $create_datetime,
+                                            $article_id,
+                                            $article_topic,
+                                            $comment_username,
+                                            $comment_username_id,
+                                            $comment_username_email
                                         );
 
                 // Execute the prepared statement.

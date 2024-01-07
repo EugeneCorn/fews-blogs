@@ -40,11 +40,14 @@
 
         // Checking does the given username already exist.
         $get_user   = mysqli_prepare($db_connection,
-            "SELECT *
+            "SELECT 
+                    COUNT(id)
+                    AS user_number
                     FROM users 
                     WHERE username = ? ");
         $secure_stmt_variables = array($username);
-        if (secureMysqlQuerySelectNumRows($get_user, $secure_stmt_variables) > 0){
+        $get_user = secureMysqliQuerySelect($get_user, $secure_stmt_variables);
+        if ($get_user['user_number'] > 0){
             echo "<script> alert('This username already exists.') </script></br>";
             echo "<script> window.location='/registration' </script>";
             exit();
@@ -52,11 +55,14 @@
 
         // Checking does the given email already in use.
         $get_email = mysqli_prepare($db_connection,
-            "SELECT *
+            "SELECT
+                    COUNT(id)
+                    AS user_number
                     FROM users 
                     WHERE email = ?  ");
         $secure_stmt_variables = array($email);
-        if (secureMysqlQuerySelectNumRows($get_email, $secure_stmt_variables) > 0){
+        $get_email = secureMysqliQuerySelect($get_email, $secure_stmt_variables);
+        if ( $get_email['user_number'] > 0){
             echo "<script> alert('This email already in use.') </script></br>";
             echo "<script> window.location='/registration' </script>";
             exit();

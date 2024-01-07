@@ -94,15 +94,17 @@ foreach ($articles as $article_item) {
     print "<p class='article_content'>".newlines2br($article_item['content'])."</p>";
 
     $comment_query = mysqli_prepare($db_connection,
-        "SELECT *
+        "SELECT
+        COUNT(comment_id)
+        AS comment_number
         FROM `comments` 
         WHERE article_id= ? ");
 
     $secure_stmt_variables = array ($article_item['article_id']);
-    $comment_count = secureMysqlQuerySelectNumRows($comment_query, $secure_stmt_variables);
+    $comment_count = secureMysqliQuerySelect($comment_query, $secure_stmt_variables);
 
     print "<a class='comment' href='/article/".$article_item['article_id']."'>
-                Comments(".$comment_count.")
+                Comments(".$comment_count['comment_number'].")
            </a>";
     }
     ?>

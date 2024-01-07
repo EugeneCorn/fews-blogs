@@ -50,11 +50,11 @@
 
         // The array for the secureMysqliQueryExecute function.
         $secure_stmt_variables = array(
-            &$topic,
-            &$content,
-            &$username,
-            &$create_datetime,
-            &$publish,
+            $topic,
+            $content,
+            $username,
+            $create_datetime,
+            $publish,
         );
 
         // Execute the prepared statement.

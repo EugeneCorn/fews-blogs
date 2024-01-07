@@ -29,7 +29,14 @@ function secureMysqliQueryExecute(mysqli_stmt $stmt, array $params):bool{
 
     // Bind parameters if provided.
     if ($paramTypes && $params) {
-         $stmt->bind_param($paramTypes, $params);
+        // Create a temporary array of references for parameters.
+        $bindParams = array($stmt, $paramTypes);
+        foreach ($params as &$param) {
+            $bindParams[] = &$param;
+        }
+
+        // Call mysqli_stmt_bind_param with the temporary array.
+        call_user_func_array('mysqli_stmt_bind_param', $bindParams);
     }
 
     return mysqli_stmt_execute($stmt);
@@ -85,21 +92,6 @@ function secureMysqliQuerySelectForLoop(mysqli_stmt $stmt, array $params = null)
 
         return $results;
 
-    } else {
-        die("Error executing statement: " . mysqli_stmt_error($stmt));
-    }
-}
-
-/** This function selects rows from a database table and counts the outputted strings.
- * @param mysqli_stmt $stmt Prepared MySQL query.
- * @param array $params An array with variables for SQL query.
- * @return string|null
- */
-function secureMysqlQuerySelectNumRows(mysqli_stmt $stmt, array $params):string|null {
-
-    if (secureMysqliQueryExecute($stmt, $params)) {
-        mysqli_stmt_store_result($stmt);
-        return mysqli_stmt_num_rows($stmt);
     } else {
         die("Error executing statement: " . mysqli_stmt_error($stmt));
     }

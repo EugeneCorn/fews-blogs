@@ -17,7 +17,7 @@
            WHERE ( `comment_id` , `username` ) = ( ? , ? )")
         or die(mysqli_error($db_connection));
 
-        $secure_stmt_variables = array(&$comment_id, &$username);
+        $secure_stmt_variables = array($comment_id, $username);
 
         $comment_item = secureMysqliQuerySelect($comment_query, $secure_stmt_variables);
         
